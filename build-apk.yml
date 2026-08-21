@@ -1,0 +1,38 @@
+name: Build APK Artifact
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify APK exists
+        run: test -f 4498_ymusic_arm64.apk
+
+      - name: Check APK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aapt apksigner zipalign
+          aapt dump badging 4498_ymusic_arm64.apk > apk-badging.txt
+          apksigner verify --verbose 4498_ymusic_arm64.apk > apk-signature.txt || true
+          sha256sum 4498_ymusic_arm64.apk > apk-sha256.txt
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ymusic-apk
+          path: 4498_ymusic_arm64.apk
+
+      - name: Upload APK information
+        uses: actions/upload-artifact@v4
+        with:
+          name: ymusic-apk-info
+          path: |
+            apk-badging.txt
+            apk-signature.txt
+            apk-sha256.txt
